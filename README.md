@@ -1,4 +1,4 @@
-# 🐾 Klasifikasi Gambar Hewan — Animals-10
+# 🐾 Klasifikasi Gambar Hewan pada Data Animals-10
  
 Proyek machine learning untuk mengklasifikasikan gambar hewan ke dalam 10 kategori menggunakan transfer learning dengan arsitektur **MobileNetV2**.
  
@@ -38,32 +38,45 @@ Model dibangun dengan pendekatan **transfer learning** menggunakan MobileNetV2 y
 ---
  
 ## 🏗️ Arsitektur Model
- 
-- **Base Model:** MobileNetV2 (pretrained ImageNet, frozen)
-- **Custom Head (Sequential):**
-  - `Conv2D` (256 filter) + `BatchNormalization` + `MaxPooling2D`
-  - `GlobalAveragePooling2D`
-  - `Dense` + `Dropout`
-  - Output layer (10 kelas, softmax)
-- **Optimizer:** Adam
+
+Model dibangun menggunakan **MobileNetV2** (pretrained ImageNet) sebagai base model yang di-*freeze*, kemudian ditambahkan **Sequential head**:
+
+```
+MobileNetV2 (pretrained ImageNet, frozen)
+    └── Sequential Head:
+            ├── Conv2D (256 filter, 3x3, ReLU)
+            ├── BatchNormalization
+            ├── MaxPooling2D (2x2)
+            ├── GlobalAveragePooling2D
+            ├── Dense (256, ReLU) + Dropout (0.5)
+            ├── Dense (128, ReLU) + Dropout (0.3)
+            └── Dense (10, Softmax)
+```
+
+- **Optimizer:** Adam (learning rate = 0.001)
 - **Loss:** Categorical Crossentropy
 - **Metrik:** Accuracy
 ---
  
-## ⚙️ Augmentasi Data
- 
-Augmentasi diterapkan hanya pada data training untuk mencegah overfitting:
- 
-| Teknik | Nilai |
-|--------|-------|
-| Rotasi | ±20° |
-| Geser horizontal/vertikal | 10% |
-| Shear | 10% |
-| Zoom | 10% |
-| Flip horizontal | ✅ |
-| Normalisasi (rescale) | 1/255 |
- 
-Data validation dan test hanya dinormalisasi tanpa augmentasi.
+## ⚙️ Training
+
+**Konfigurasi:**
+
+| Parameter    | Nilai      |
+|--------------|------------|
+| Image Size   | 224 × 224  |
+| Batch Size   | 32         |
+| Max Epochs   | 20         |
+
+**Augmentasi data training:** rotasi (±20°), geser horizontal & vertikal (±10%), shear (±10%), zoom (±10%), dan flip horizontal. Data validation dan testing hanya dinormalisasi tanpa augmentasi.
+
+**Callback yang digunakan:**
+
+| Callback            | Konfigurasi                                          |
+|---------------------|------------------------------------------------------|
+| `EarlyStopping`     | monitor=`val_loss`, patience=5, restore best weights |
+| `ReduceLROnPlateau` | monitor=`val_loss`, factor=0.5, patience=3, min_lr=1e-5 |
+| `ModelCheckpoint`   | monitor=`val_accuracy`, save best only → `best_model.h5` |
  
 ---
  
